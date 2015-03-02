@@ -1,0 +1,56 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  	<title>Vending Machine Unit-Test</title>
+  	<meta name="description" content="The HTML5 Herald">
+  	<meta name="author" content="SitePoint">
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.17.1.css">
+</head>
+<body>
+	<div id="qunit"></div>
+  	<div id="qunit-fixture"></div>
+
+	<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+	<script src="http://code.jquery.com/qunit/qunit-1.17.1.js"></script>
+	<script>
+	$(function(){
+		var vendingMachine;
+
+		var VendingMachine = function(){
+			var item;
+			var allItems = ['맥주', '콜라', '오렌지 주스'];
+
+			return {
+				order : function(paramItem){
+					item = paramItem;
+					return item;
+				},
+				showItems : function(){
+					return allItems;
+				}
+			}
+		};
+
+		//Order Test
+		QUnit.module('Ordering Test', {
+		    setup : function(){
+		        vendingMachine = new VendingMachine();
+		    },
+		    teardown : function(){
+		        vendingMachine = null;
+		    }
+		});
+
+		QUnit.test('자판기는 원하는 음료를 꺼낼 수 있다. (맥주, 콜라, 오렌지 주스 중 1개)', function( assert ) {
+			$.each(vendingMachine.showItems(), function(idx, item){
+			 	assert.equal(vendingMachine.order(item), item, 'Ordering to '+item+' is possible');
+			});
+		});
+		
+	});	
+	</script>
+</body>
+</html>
