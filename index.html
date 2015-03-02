@@ -1,5 +1,13 @@
-<!doctype html>
+<!-- 
+VM-JSUT 명세
+ * [Complete] 자판기에서 원하는 음료를 꺼낼 수 있다. (맥주, 콜라, 오렌지 주스 중)
+ * 동전을 넣을 수 있다.
+ * 지폐를 넣을 수 있다.
+ * 거스름 돈을 환전 받을 수 있다.
+ * [Complete]재고만큼 음료를 구매할 수 있다.
+-->
 
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -14,6 +22,7 @@
   	<div id="qunit-fixture"></div>
 
 	<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js"></script>
 	<script src="http://code.jquery.com/qunit/qunit-1.17.1.js"></script>
 	<script>
 	$(function(){
@@ -21,21 +30,51 @@
 
 		var VendingMachine = function(){
 			var item;
-			var allItems = ['맥주', '콜라', '오렌지 주스'];
+			var itemStock  = {
+				'Coke' : 1,
+				'Coffee' : 1,
+				'Orange Juice' : 1,
+				'Beer' : 1
+			};
+			var balance = 0;
 
 			return {
 				order : function(paramItem){
-					item = paramItem;
-					return item;
+					if(balance < 500){
+						return null;
+					}
+
+
+					if(Object.keys(itemStock).indexOf(paramItem) == -1 || itemStock[paramItem] < 1){
+						return null;
+					}
+
+					itemStock[paramItem]--;
+					balance = balance - 500;
+					return paramItem;
+					
 				},
 				showItems : function(){
-					return allItems;
+					return Object.keys(itemStock);
+				},
+				supply : function(paramItem){
+					if(Object.keys(itemStock).indexOf(paramItem) != -1) 
+					itemStock[paramItem]++;
+				},
+				insertCoin : function(paramCoin){
+					balance = balance + paramCoin;
+				},
+				getBalance : function(){
+					return balance;
+				},
+				setPrice : function(){
+					
 				}
 			}
 		};
 
 		//Order Test
-		QUnit.module('Ordering Test', {
+		QUnit.module('Vending Machine Test', {
 		    setup : function(){
 		        vendingMachine = new VendingMachine();
 		    },
@@ -44,10 +83,52 @@
 		    }
 		});
 
-		QUnit.test('자판기는 원하는 음료를 꺼낼 수 있다. (맥주, 콜라, 오렌지 주스 중 1개)', function( assert ) {
+		QUnit.test('자판기는 원하는 음료를 꺼낼 수 있다. (맥주, 콜라, 오렌지 주스 중 1개, 재고가 있는 한에서)', function( assert ) {
+			
+			vendingMachine.insertCoin(10000);
 			$.each(vendingMachine.showItems(), function(idx, item){
 			 	assert.equal(vendingMachine.order(item), item, 'Ordering to '+item+' is possible');
 			});
+		});
+
+		QUnit.test('재고만큼 음료를 구매할 수 있다.', function(assert){
+			vendingMachine.insertCoin(10000);
+			var Bev1 = vendingMachine.order('Coke');
+			var Bev2 = vendingMachine.order('Coke');
+
+			assert.equal(Bev1, 'Coke');
+			assert.equal(Bev2, null);
+		});
+
+		QUnit.test('동전을 여러번 넣을 수 있다.', function(assert){
+			vendingMachine.insertCoin(500);
+			vendingMachine.insertCoin(100);
+			assert.equal(vendingMachine.getBalance(), 600);
+		});
+
+		QUnit.test('음료별 가격을 설정할 수 있다.', function(assert){
+			vendingMachine.insertCoin(700);
+			vendingMachine.setPrice({
+				'Coke' : 500,
+				'Coffee' : 200
+			});
+
+			assert.equal(vendingMachine.order('Coke'));
+			assert.equal(vendingMachine.order('Coffee'));
+		});
+
+		QUnit.test('동전을 넣은 만큼만 음료를 구매할 수 있다.', function(assert){
+			for(var i=0; i<100; i++){
+				vendingMachine.supply('Coke');	
+			}
+			
+			vendingMachine.insertCoin(500);
+			var bev1 = vendingMachine.order('Coke');
+			var bev2 = vendingMachine.order('Coke');
+
+			assert.equal(bev1, 'Coke');
+			assert.equal(bev2, null);
+			
 		});
 		
 	});	
